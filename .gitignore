@@ -1,0 +1,4 @@
+advisor-server
+state/
+hooks-debug.log
+*.bak*
