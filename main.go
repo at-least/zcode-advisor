@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	serverName    = "advisor"
+	serverName    = "zcode-mcp-advisor"
 	serverVersion = "1.0.0"
 	defaultModel  = "glm-5.3"
 	// Coding Plan 專用端點（GLM Coding Plan 的 key 不走 api/paas/v4 的按量計費端點）
@@ -116,7 +116,7 @@ func apiKeyFromConfig() string {
 		return ""
 	}
 	if json.Unmarshal(b, &cfg) == nil {
-		return cfg.Mcp.Servers["advisor"].Env["ZAI_API_KEY"]
+		return cfg.Mcp.Servers["zcode-mcp-advisor"].Env["ZAI_API_KEY"]
 	}
 	return ""
 }
@@ -282,7 +282,7 @@ func consult(question, contextStr string) callToolResult {
 	}
 	if apiKey == "" {
 		return callToolResult{
-			Content: []textContent{{Type: "text", Text: "error: ZAI_API_KEY is not set; fill it in ~/.zcode/cli/config.json (mcp.servers.advisor.env) and restart the session"}},
+			Content: []textContent{{Type: "text", Text: "error: ZAI_API_KEY is not set; fill it in ~/.zcode/cli/config.json (mcp.servers.zcode-mcp-advisor.env) and restart the session"}},
 			IsError: true,
 		}
 	}

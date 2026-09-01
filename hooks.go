@@ -138,7 +138,7 @@ func statePath(sess string) string {
 
 func stateDir() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".zcode", "mcp-advisor", "state")
+	return filepath.Join(home, ".zcode", "zcode-mcp-advisor", "state")
 }
 
 func loadState(sess string) hookState {
@@ -206,7 +206,7 @@ func sanitizeSession(s string) string {
 // debugLog：把每次 hook 的原始輸入留檔，供第一次上線時確認實際欄位名；超過 2MB 就重開。
 func debugLog(event string, stdin []byte) {
 	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, ".zcode", "mcp-advisor", "hooks-debug.log")
+	path := filepath.Join(home, ".zcode", "zcode-mcp-advisor", "hooks-debug.log")
 	if fi, err := os.Stat(path); err == nil && fi.Size() > 2<<20 {
 		_ = os.Remove(path)
 	}
