@@ -42,20 +42,35 @@ var (
 
 // resolveAPIKey：環境變數 ZAI_API_KEY 優先（MCP server 模式由 config 的 env 提供），
 // 其次解析 ~/.secrets/secrets.env（候選名可用 ADVISOR_KEY_NAME 指定，預設找
-// ZAI_API_KEY、Z_AI_API_KEY——後者是 Z.ai 官方命名），最後回 config.json。
+// Z_AI_API_KEY_PRO/_MAX、ZAI_API_KEY），最後回 config.json。
+// 佔位符視同未設定——config 留著 sk-REPLACE-ME 之類的值不會遮蔽 secrets 鏈。
 // key 只有這幾個地方，永遠不進 git。
 func resolveAPIKey() string {
-	if v := os.Getenv("ZAI_API_KEY"); v != "" {
+	if v := os.Getenv("ZAI_API_KEY"); isRealKey(v) {
 		return v
 	}
 	if m := parseSecretsEnv(); len(m) > 0 {
 		for _, name := range keyCandidates() {
-			if v := m[name]; v != "" {
+			if v := m[name]; isRealKey(v) {
 				return v
 			}
 		}
 	}
-	return apiKeyFromConfig()
+	if v := apiKeyFromConfig(); isRealKey(v) {
+		return v
+	}
+	return ""
+}
+
+// isRealKey：非空且不是佔位符/範本字樣才算有效 key。
+func isRealKey(v string) bool {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return false
+	}
+	lv := strings.ToUpper(v)
+	return !strings.Contains(lv, "REPLACE") && !strings.Contains(lv, "YOUR_") &&
+		!strings.Contains(lv, "YOUR-")
 }
 
 func keyCandidates() []string {

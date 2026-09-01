@@ -46,7 +46,6 @@ go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
       "zcode-mcp-advisor": {
         "type": "stdio",
         "command": "/Users/你的名字/.zcode/zcode-mcp-advisor/zcode-mcp-advisor",
-        "env": { "ZAI_API_KEY": "（可留佔位符，見下節）" },
         "timeoutMs": 120000
       }
     }
@@ -85,6 +84,8 @@ go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
 1. 環境變數 `ZAI_API_KEY`
 2. `~/.secrets/secrets.env`（支援 `export` 前綴、引號、前導空白、註解），候選順序：`ADVISOR_KEY_NAME` 指定名 → `Z_AI_API_KEY_PRO` → `Z_AI_API_KEY_MAX` → `ZAI_API_KEY`
 3. config 的 `mcp.servers.zcode-mcp-advisor.env.ZAI_API_KEY`
+
+**注意：config 的 `env` 不要放佔位符**（如 `sk-REPLACE-ME`）——config 的 env 會注入 server 進程、在解析鏈中享最高優先，實測曾因此遮蔽 secrets 鏈導致 401。現已雙重防護：程式碼會把含 REPLACE/YOUR_ 字樣的值視同未設定，但別依賴它。key 永遠不進 git。
 
 預設端點是 **GLM Coding Plan 專用**：`https://api.z.ai/api/coding/paas/v4/chat/completions`（Coding Plan 的 key 打按量計費的 `api/paas/v4` 只會得到「餘額不足」）。key 永遠不進 git。
 
