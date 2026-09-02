@@ -32,10 +32,15 @@ ZCode 為每個 session 在 `~/.zcode/cli/rollout/model-io-sess_<uuid>.jsonl` �
 
 ## 建置與安裝
 
+安裝到 `/usr/local/bin`（Mac/Linux 前綴相同的唯一慣用位置——ZCode config 不展開 `~`，固定絕對路徑可讓同一份 config 跨機通用）：
+
 ```bash
 cd ~/.zcode/zcode-advisor
-go build -o zcode-advisor .   # Go 1.27+，無需任何依賴下載
+go build -o zcode-advisor .            # Go 1.27+，無需任何依賴下載
+sudo install -m 0755 zcode-advisor /usr/local/bin/zcode-advisor
 ```
+
+跨機自動化請用 dotfiles repo 的 `setup-zcode.sh`（clone＋build＋install＋煙霧測試一條龍）。
 
 在 `~/.zcode/cli/config.json` 註冊（注意：config-file hooks 必須 `hooks.enabled: true` 才會跑）：
 
@@ -45,7 +50,7 @@ go build -o zcode-advisor .   # Go 1.27+，無需任何依賴下載
     "servers": {
       "zcode-advisor": {
         "type": "stdio",
-        "command": "/Users/你的名字/.zcode/zcode-advisor/zcode-advisor",
+        "command": "/usr/local/bin/zcode-advisor",
         "timeoutMs": 120000
       }
     }
@@ -55,17 +60,17 @@ go build -o zcode-advisor .   # Go 1.27+，無需任何依賴下載
     "events": {
       "UserPromptSubmit": [
         { "hooks": [{ "type": "command",
-            "command": "/Users/你的名字/.zcode/zcode-advisor/zcode-advisor hook UserPromptSubmit",
+            "command": "/usr/local/bin/zcode-advisor hook UserPromptSubmit",
             "timeoutMs": 10000, "statusMessage": "advisor 諮詢提醒" }] }
       ],
       "PostToolUseFailure": [
         { "hooks": [{ "type": "command",
-            "command": "/Users/你的名字/.zcode/zcode-advisor/zcode-advisor hook PostToolUseFailure",
+            "command": "/usr/local/bin/zcode-advisor hook PostToolUseFailure",
             "timeoutMs": 120000, "statusMessage": "advisor 卡關診斷…" }] }
       ],
       "PostToolUse": [
         { "hooks": [{ "type": "command",
-            "command": "/Users/你的名字/.zcode/zcode-advisor/zcode-advisor hook PostToolUseOK",
+            "command": "/usr/local/bin/zcode-advisor hook PostToolUseOK",
             "timeoutMs": 10000 }] }
       ]
     }
@@ -106,6 +111,7 @@ go build -o zcode-advisor .   # Go 1.27+，無需任何依賴下載
 
 ## 檔案
 
+- 執行檔安裝在 `/usr/local/bin/zcode-advisor`；原始碼 clone 於 `~/.zcode/zcode-advisor`
 - `main.go` — MCP server（JSON-RPC 子集：initialize / ping / tools/list / tools/call）、`askAdvisor`（顧問 API 呼叫）、key 解析鏈
 - `hooks.go` — 三個 hook 處理器、session 狀態檔（`state/<sess>.state.json`：提醒/失敗/卡關/已諮詢計數）、提醒文字
 - `rollout.go` — UUID 反查、對話壓縮、當前輪獨白抽取
