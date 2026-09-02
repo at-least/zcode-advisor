@@ -1,3 +1,3 @@
-module zcode-mcp-advisor
+module zcode-advisor
 
 go 1.27

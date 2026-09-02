@@ -1,4 +1,4 @@
-# zcode-mcp-advisor
+# zcode-advisor
 
 ZCode 版的 [Anthropic advisor tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/advisor-tool)：讓便宜快速的執行模型（glm-5.3-flash）在關鍵時刻向更強的顧問模型（glm-5.3）徵詢戰略建議，用 Go 實作的單一 binary、純標準庫、零外部依賴。
 
@@ -33,8 +33,8 @@ ZCode 為每個 session 在 `~/.zcode/cli/rollout/model-io-sess_<uuid>.jsonl` �
 ## 建置與安裝
 
 ```bash
-cd ~/.zcode/zcode-mcp-advisor
-go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
+cd ~/.zcode/zcode-advisor
+go build -o zcode-advisor .   # Go 1.27+，無需任何依賴下載
 ```
 
 在 `~/.zcode/cli/config.json` 註冊（注意：config-file hooks 必須 `hooks.enabled: true` 才會跑）：
@@ -43,9 +43,9 @@ go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
 {
   "mcp": {
     "servers": {
-      "zcode-mcp-advisor": {
+      "zcode-advisor": {
         "type": "stdio",
-        "command": "/Users/你的名字/.zcode/zcode-mcp-advisor/zcode-mcp-advisor",
+        "command": "/Users/你的名字/.zcode/zcode-advisor/zcode-advisor",
         "timeoutMs": 120000
       }
     }
@@ -55,17 +55,17 @@ go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
     "events": {
       "UserPromptSubmit": [
         { "hooks": [{ "type": "command",
-            "command": "/Users/你的名字/.zcode/zcode-mcp-advisor/zcode-mcp-advisor hook UserPromptSubmit",
+            "command": "/Users/你的名字/.zcode/zcode-advisor/zcode-advisor hook UserPromptSubmit",
             "timeoutMs": 10000, "statusMessage": "advisor 諮詢提醒" }] }
       ],
       "PostToolUseFailure": [
         { "hooks": [{ "type": "command",
-            "command": "/Users/你的名字/.zcode/zcode-mcp-advisor/zcode-mcp-advisor hook PostToolUseFailure",
+            "command": "/Users/你的名字/.zcode/zcode-advisor/zcode-advisor hook PostToolUseFailure",
             "timeoutMs": 120000, "statusMessage": "advisor 卡關診斷…" }] }
       ],
       "PostToolUse": [
         { "hooks": [{ "type": "command",
-            "command": "/Users/你的名字/.zcode/zcode-mcp-advisor/zcode-mcp-advisor hook PostToolUseOK",
+            "command": "/Users/你的名字/.zcode/zcode-advisor/zcode-advisor hook PostToolUseOK",
             "timeoutMs": 10000 }] }
       ]
     }
@@ -73,7 +73,7 @@ go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
 }
 ```
 
-重啟 ZCode session 生效。工具名為 `mcp__zcode-mcp-advisor__consult_advisor`，參數 `question`（必填）＋ `context`（選填，只補對話裡還沒有的材料）。
+重啟 ZCode session 生效。工具名為 `mcp__zcode-advisor__consult_advisor`，參數 `question`（必填）＋ `context`（選填，只補對話裡還沒有的材料）。
 
 建議一併在使用者指示檔（`~/.zcode/AGENTS.md`）加入顧問使用守則——「定位不算實質工作、定下做法前與宣稱完成前各問一次、建議為強先驗、衝突帶回顧問裁決」，完整版見 dotfiles 內的實作。
 
@@ -83,7 +83,7 @@ go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
 
 1. 環境變數 `ZAI_API_KEY`
 2. `~/.secrets/secrets.env`（支援 `export` 前綴、引號、前導空白、註解），候選順序：`ADVISOR_KEY_NAME` 指定名 → `Z_AI_API_KEY_PRO` → `Z_AI_API_KEY_MAX` → `ZAI_API_KEY`
-3. config 的 `mcp.servers.zcode-mcp-advisor.env.ZAI_API_KEY`
+3. config 的 `mcp.servers.zcode-advisor.env.ZAI_API_KEY`
 
 **注意：config 的 `env` 不要放佔位符**（如 `sk-REPLACE-ME`）——config 的 env 會注入 server 進程、在解析鏈中享最高優先，實測曾因此遮蔽 secrets 鏈導致 401。現已雙重防護：程式碼會把含 REPLACE/YOUR_ 字樣的值視同未設定，但別依賴它。key 永遠不進 git。
 
@@ -110,7 +110,7 @@ go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
 - `hooks.go` — 三個 hook 處理器、session 狀態檔（`state/<sess>.state.json`：提醒/失敗/卡關/已諮詢計數）、提醒文字
 - `rollout.go` — UUID 反查、對話壓縮、當前輪獨白抽取
 
-執行期產物（皆已 gitignore）：`zcode-mcp-advisor` binary、`state/`、`hooks-debug.log`（記錄每次 hook 的原始輸入，供驗證 ZCode 實際欄位名）。
+執行期產物（皆已 gitignore）：`zcode-advisor` binary、`state/`、`hooks-debug.log`（記錄每次 hook 的原始輸入，供驗證 ZCode 實際欄位名）。
 
 ## 與 Anthropic 原版的差異
 
@@ -123,14 +123,14 @@ go build -o zcode-mcp-advisor .   # Go 1.27+，無需任何依賴下載
 ```bash
 # 協議
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
-  | ./zcode-mcp-advisor
+  | ./zcode-advisor
 
 # 端到端（會真的打 API，max_tokens 太小會因思考段擠掉可見文字而回空內容）
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"consult_advisor","arguments":{"question":"回覆OK"}}}' \
-  | ADVISOR_MAX_TOKENS=512 ./zcode-mcp-advisor
+  | ADVISOR_MAX_TOKENS=512 ./zcode-advisor
 
 # hook（不打 API）
-echo '{"prompt":"…40字以上的任務描述…","session_id":"s1"}' | ./zcode-mcp-advisor hook UserPromptSubmit
+echo '{"prompt":"…40字以上的任務描述…","session_id":"s1"}' | ./zcode-advisor hook UserPromptSubmit
 ```
 
 疑難排解：hook 沒觸發 → 先確認 `hooks.enabled: true`，再看 `hooks-debug.log` 有無記錄（有 config 問題參照 ZCode 的 diagnosing-hooks 指南）；MCP 連不上 → Settings → MCP 看狀態，config-file server 的 schema 是嚴格的（未知欄位會整個被丟棄）、路徑必須絕對。
